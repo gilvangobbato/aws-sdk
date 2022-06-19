@@ -1,9 +1,7 @@
 package com.github.gilvangobbato.entity;
 
 import lombok.*;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbAttribute;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbBean;
-import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.DynamoDbPartitionKey;
+import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
 @Data
 @Builder
@@ -45,12 +43,20 @@ public class Customer {
         return country;
     }
 
+    @DynamoDbSecondaryPartitionKey(indexNames = {Customer.STATE_GSI})
     public String getState() {
         return state;
     }
+    public void setState(String state){
+        this.state = state;
+    }
 
+    @DynamoDbSecondarySortKey(indexNames = {Customer.STATE_GSI})
     public String getCity() {
         return city;
+    }
+    public void setCity(String city){
+        this.city = city;
     }
 
     @DynamoDbAttribute(ZIP_CODE)

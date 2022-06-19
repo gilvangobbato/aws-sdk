@@ -11,8 +11,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
+import software.amazon.awssdk.utils.Pair;
 
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
@@ -35,7 +43,7 @@ class CustomerServiceTest {
     void simpleCreateCustomer() {
         final var customer = this.buildCustomer();
         Mono.just(customer)
-                .flatMap(it -> Mono.fromFuture(service.simpleCreateCustomer(it)))
+                .flatMap(it -> Mono.fromFuture(service.create(it)))
                 .block();
     }
 
@@ -43,7 +51,7 @@ class CustomerServiceTest {
     void getCustomer() {
         final var customer = this.buildCustomer();
         Mono.just(customer)
-                .flatMap(it -> Mono.fromFuture(service.simpleCreateCustomer(it)))
+                .flatMap(it -> Mono.fromFuture(service.create(it)))
                 .then(Mono.defer(() -> Mono.fromFuture(service.getCustomer(customer.getId()))))
                 .doOnNext(retrieved -> {
                     log.info(retrieved.getName());
@@ -64,7 +72,7 @@ class CustomerServiceTest {
 
         //Create
         Mono.just(customer)
-                .flatMap(it -> Mono.fromFuture(service.simpleCreateCustomer(it)))
+                .flatMap(it -> Mono.fromFuture(service.create(it)))
                 .then(Mono.defer(() -> Mono.fromFuture(service.getCustomer(customer.getId()))))
                 .doOnNext(it -> {
                     it.setState(state);
@@ -83,6 +91,85 @@ class CustomerServiceTest {
                     Assertions.assertEquals(customer.getName(), retrieved.getName());
                 })
                 .block();
+    }
+
+    @Test
+    void createWithTransaction() {
+        List<Customer> customers = new ArrayList<>();
+
+        for (int i = 0; i < 25; i++) {
+            customers.add(buildCustomer());
+        }
+
+        Mono.just(customers)
+                .flatMap(it -> Mono.fromFuture(this.service.createWithTransaction(it)))
+                .block();
+    }
+
+    @Test
+    void populateTable() throws ExecutionException, InterruptedException {
+        for (int i = 0; i < 1000; i++) {
+            createWithTransaction();
+            Customer customer = this.buildCustomer();
+            customer.setCity("Garibaldi");
+            customer.setState("RS");
+            this.service.create(customer).get();
+        }
+    }
+
+    @Test
+    void updateTransaction() throws ExecutionException, InterruptedException {
+        final var city = "Farroupilha";
+        final var zip = "54846001";
+        final var state = "RS";
+        List<Customer> toUpdate = Arrays.asList(
+                this.buildCustomer(),
+                this.buildCustomer());
+        service.createWithTransaction(toUpdate).get();
+
+        toUpdate.forEach(it -> {
+            it.setCity(city);
+            it.setZipCode(zip);
+            it.setState(state);
+        });
+
+        service.updateTransaction(toUpdate).get();
+
+        final var source = Flux.fromIterable(toUpdate)
+                .flatMap(it -> Mono.fromFuture(service.getCustomer(it.getId()))
+                        .map(retrieved -> Pair.of(it, retrieved)));
+
+        StepVerifier.create(source)
+                .consumeNextWith(this::assertCustomer)
+                .consumeNextWith(this::assertCustomer)
+                .expectComplete()
+                .verify();
+
+    }
+
+    @Test
+    void queryByStateAndCity() {
+        final var timeStart = LocalTime.now();
+
+        List<Customer> customers = Flux.from(service.queryByStateAndCity("RS", "Garibaldi"))
+                .doOnNext(it -> log.info("Found " + (it.items().size())))
+                .flatMap(page -> Flux.fromIterable(page.items()))
+                .doOnNext(it -> log.info("Customer: " + it.getName()))
+                .collectList()
+                .block();
+
+        log.info("Found " + customers.size() + " customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS));
+    }
+
+    private void assertCustomer(Pair<Customer, Customer> pair) {
+        final var original = pair.left();
+        final var retrieved = pair.right();
+        log.info(retrieved.getName());
+        Assertions.assertNotNull(retrieved);
+
+        Assertions.assertEquals(original.getCity(), retrieved.getCity());
+        Assertions.assertEquals(original.getZipCode(), retrieved.getZipCode());
+        Assertions.assertEquals(original.getState(), retrieved.getState());
     }
 
     private Customer buildCustomer() {

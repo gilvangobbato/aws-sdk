@@ -159,7 +159,7 @@ public class CustomerRepository {
         return response;
     }
 
-    public CustomerResponse scanByStateAndCidy(String state, String city, int limit, Map<String, AttributeValue> lastKey) {
+    public CustomerResponse scanByStateAndCity(String state, String city, int limit, Map<String, AttributeValue> lastKey) {
         ScanRequest request = new ScanRequest()
                 .withTableName(TABLE_NAME)
                 .withFilterExpression("st = :v_st AND city = :v_city")

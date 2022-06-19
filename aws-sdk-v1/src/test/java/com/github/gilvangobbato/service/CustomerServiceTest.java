@@ -86,7 +86,6 @@ class CustomerServiceTest {
         Assertions.assertEquals("RS", fromDynamo.getState());
     }
 
-
     @Test
     void updateTransaction() {
         service.createTable();

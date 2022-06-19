@@ -46,7 +46,7 @@ public class CustomerService {
     public List<Customer> scanByStateAndCity(String state, String city) {
         CustomerResponse response = new CustomerResponse();
         do {
-            CustomerResponse fromQuery = repository.scanByStateAndCidy(state, city, 1000, response.getLastKey());
+            CustomerResponse fromQuery = repository.scanByStateAndCity(state, city, 1000, response.getLastKey());
             response.addAll(fromQuery.getCustomers());
             response.setLastKey(fromQuery.getLastKey());
         } while (response.getLastKey() != null);
