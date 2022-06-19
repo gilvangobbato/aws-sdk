@@ -29,14 +29,6 @@ public class CustomerService {
         return repository.getCustomer(id);
     }
 
-    public List<Customer> queryByStateAndCity(String state, String city) {
-
-        return null;
-    }
-
-    public List<Customer> scanByStateAndCity(String state, String city) {
-        return null;
-    }
 
     public CompletableFuture<Customer> update(Customer customer) {
         return repository.update(customer);
@@ -44,5 +36,14 @@ public class CustomerService {
 
     public void updateTransaction(List<Customer> customers) {
         repository.updateTransaction(customers);
+    }
+
+    public List<Customer> queryByStateAndCity(String state, String city) {
+
+        return null;
+    }
+
+    public List<Customer> scanByStateAndCity(String state, String city) {
+        return null;
     }
 }

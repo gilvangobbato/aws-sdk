@@ -54,14 +54,6 @@ public class CustomerRepository {
                 .build());
     }
 
-    public Object queryByStateAndCity(String state, String city) {
-        return null;
-    }
-
-    public Object scanByStateAndCidy(String state, String city) {
-        return null;
-    }
-
     public CompletableFuture<Customer> update(Customer customer) {
         return getTable()
                 .updateItem(customer);
@@ -69,6 +61,14 @@ public class CustomerRepository {
 
     public void updateTransaction(List<Customer> customers) {
 
+    }
+
+    public Object queryByStateAndCity(String state, String city) {
+        return null;
+    }
+
+    public Object scanByStateAndCidy(String state, String city) {
+        return null;
     }
 
 }
