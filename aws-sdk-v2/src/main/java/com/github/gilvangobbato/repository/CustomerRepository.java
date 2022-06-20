@@ -6,6 +6,9 @@ import software.amazon.awssdk.core.async.SdkPublisher;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.Projection;
+import software.amazon.awssdk.services.dynamodb.model.ProjectionType;
+import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput;
 
 import java.util.List;
 import java.util.Map;
@@ -23,7 +26,18 @@ public class CustomerRepository {
         this.dynamoDbEnhancedAsyncClient = dynamoDbEnhancedAsyncClient;
         this.table = dynamoDbEnhancedAsyncClient.table(TABLE_NAME, TableSchema.fromBean(Customer.class));
         try {
-            table.createTable().get();
+            table.createTable(CreateTableEnhancedRequest.builder()
+                            .globalSecondaryIndices(EnhancedGlobalSecondaryIndex.builder()
+                                    .indexName(Customer.STATE_GSI)
+                                    .projection(Projection.builder()
+                                            .projectionType(ProjectionType.ALL)
+                                            .build())
+                                    .provisionedThroughput(ProvisionedThroughput.builder()
+                                            .readCapacityUnits(10L)
+                                            .writeCapacityUnits(10L)
+                                            .build())
+                                    .build())
+                    .build()).get();
         } catch (InterruptedException | ExecutionException e) {
             log.info("Table already exists");
         }

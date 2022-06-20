@@ -18,7 +18,6 @@ public class Customer {
     public static final String STATE = "st";
     public static final String ZIP_CODE = "zip_code";
     public static final String GENDER = "gender";
-    public static final String GENDER_GSI = "GenderIndex";
     public static final String STATE_GSI = "StIndex";
 
     private String id;
