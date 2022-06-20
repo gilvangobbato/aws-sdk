@@ -154,12 +154,12 @@ class CustomerServiceTest {
         List<Customer> customers = Flux.from(service.queryByStateAndCity("RS", "Garibaldi"))
                 .doOnNext(it -> log.info("Found " + (it.items().size())))
                 .flatMap(page -> Flux.fromIterable(page.items()))
-                .doOnNext(it -> log.info("Customer: " + it.getName()))
+//                .doOnNext(it -> log.info("Customer: " + it.getName()))
                 .collectList()
                 .block();
 
         assert customers != null;
-        log.info("Found " + customers.size() + " customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS));
+        log.info("Found " + customers.size() + " customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms");
     }
 
     @Test
@@ -169,12 +169,12 @@ class CustomerServiceTest {
         List<Customer> customers = Flux.from(service.scanByStateAndCity("RS", "Garibaldi"))
                 .doOnNext(page -> log.info("Found " + (page.items().size())))
                 .flatMap(page -> Flux.fromIterable(page.items()))
-                .doOnNext(it -> log.info("Customer: " + it.getName()))
+//                .doOnNext(it -> log.info("Customer: " + it.getName()))
                 .collectList()
                 .block();
 
         assert customers != null;
-        log.info("Found " + customers.size() + " customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS));
+        log.info("Found " + customers.size() + " customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms");
     }
 
     private void assertCustomer(Pair<Customer, Customer> pair) {
