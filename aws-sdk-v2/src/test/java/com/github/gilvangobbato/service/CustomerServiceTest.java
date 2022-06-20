@@ -158,6 +158,22 @@ class CustomerServiceTest {
                 .collectList()
                 .block();
 
+        assert customers != null;
+        log.info("Found " + customers.size() + " customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS));
+    }
+
+    @Test
+    void scanByStateAndCity() {
+        final var timeStart = LocalTime.now();
+
+        List<Customer> customers = Flux.from(service.scanByStateAndCity("RS", "Garibaldi"))
+                .doOnNext(page -> log.info("Found " + (page.items().size())))
+                .flatMap(page -> Flux.fromIterable(page.items()))
+                .doOnNext(it -> log.info("Customer: " + it.getName()))
+                .collectList()
+                .block();
+
+        assert customers != null;
         log.info("Found " + customers.size() + " customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS));
     }
 

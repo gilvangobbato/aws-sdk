@@ -43,20 +43,16 @@ public class Customer {
         return country;
     }
 
+    @DynamoDbAttribute(Customer.STATE)
     @DynamoDbSecondaryPartitionKey(indexNames = {Customer.STATE_GSI})
     public String getState() {
         return state;
     }
-    public void setState(String state){
-        this.state = state;
-    }
 
+    @DynamoDbAttribute(Customer.CITY)
     @DynamoDbSecondarySortKey(indexNames = {Customer.STATE_GSI})
     public String getCity() {
         return city;
-    }
-    public void setCity(String city){
-        this.city = city;
     }
 
     @DynamoDbAttribute(ZIP_CODE)

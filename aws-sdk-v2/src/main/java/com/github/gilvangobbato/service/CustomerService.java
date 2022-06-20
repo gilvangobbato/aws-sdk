@@ -5,6 +5,7 @@ import com.github.gilvangobbato.repository.CustomerRepository;
 import lombok.AllArgsConstructor;
 import software.amazon.awssdk.core.async.SdkPublisher;
 import software.amazon.awssdk.enhanced.dynamodb.model.Page;
+import software.amazon.awssdk.enhanced.dynamodb.model.PagePublisher;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -45,7 +46,7 @@ public class CustomerService {
         return repository.queryByStateAndCity(state, city);
     }
 
-    public List<Customer> scanByStateAndCity(String state, String city) {
-        return null;
+    public PagePublisher<Customer> scanByStateAndCity(String state, String city) {
+        return repository.scanByStateAndCity(state, city);
     }
 }

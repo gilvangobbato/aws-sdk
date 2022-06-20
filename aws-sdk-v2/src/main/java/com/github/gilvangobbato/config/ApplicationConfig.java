@@ -10,6 +10,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 
 import java.net.URI;
+import java.util.concurrent.ExecutionException;
 
 @Configuration
 public class ApplicationConfig {
@@ -31,11 +32,12 @@ public class ApplicationConfig {
     }
 
     @Bean
-    public CustomerService service(final CustomerRepository repository){
+    public CustomerService service(final CustomerRepository repository) {
         return new CustomerService(repository);
     }
 
-    @Bean CustomerRepository repository(final DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient){
+    @Bean
+    CustomerRepository repository(final DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient) throws ExecutionException, InterruptedException {
         return new CustomerRepository(dynamoDbEnhancedAsyncClient);
     }
 }

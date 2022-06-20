@@ -6,9 +6,9 @@ import software.amazon.awssdk.core.async.SdkPublisher;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.*;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughput;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -21,7 +21,7 @@ public class CustomerRepository {
 
     public CustomerRepository(final DynamoDbEnhancedAsyncClient dynamoDbEnhancedAsyncClient) {
         this.dynamoDbEnhancedAsyncClient = dynamoDbEnhancedAsyncClient;
-                this.table = dynamoDbEnhancedAsyncClient.table(TABLE_NAME, TableSchema.fromBean(Customer.class));
+        this.table = dynamoDbEnhancedAsyncClient.table(TABLE_NAME, TableSchema.fromBean(Customer.class));
         try {
             table.createTable().get();
         } catch (InterruptedException | ExecutionException e) {
@@ -31,7 +31,7 @@ public class CustomerRepository {
 
 
     public CompletableFuture<Void> deleteTable() {
-        return this.table.deleteTable();
+        return dynamoDbEnhancedAsyncClient.table(TABLE_NAME, TableSchema.fromBean(Customer.class)).deleteTable();
     }
 
     public CompletableFuture<Void> create(Customer customer) {
@@ -77,30 +77,30 @@ public class CustomerRepository {
     }
 
     public SdkPublisher<Page<Customer>> queryByStateAndCity(String state, String city) {
-        DynamoDbAsyncIndex<Customer> secIndex = dynamoDbEnhancedAsyncClient
-                .table(TABLE_NAME, TableSchema.fromBean(Customer.class))
-                .index(Customer.STATE_GSI);
-
-        AttributeValue pk = AttributeValue.builder()
-                .s(state)
-                .build();
-        AttributeValue sk = AttributeValue.builder()
-                .s(city)
-                .build();
+        DynamoDbAsyncIndex<Customer> secIndex = this.table.index(Customer.STATE_GSI);
 
         QueryConditional query = QueryConditional.keyEqualTo(Key.builder()
-                .partitionValue(pk)
-                .sortValue(sk)
+                .partitionValue(state)
+                .sortValue(city)
                 .build());
 
         return secIndex.query(QueryEnhancedRequest.builder()
                 .queryConditional(query)
-                .limit(10)
+                .limit(100)
                 .build());
     }
 
-    public Object scanByStateAndCity(String state, String city) {
-        return null;
+    public PagePublisher<Customer> scanByStateAndCity(String state, String city) {
+        ScanEnhancedRequest request = ScanEnhancedRequest.builder()
+                .filterExpression(Expression.builder()
+                        .expression("#st = :v_st AND #city = :v_city")
+                        .expressionNames(Map.of("#st", Customer.STATE, "#city", Customer.CITY))
+                        .expressionValues(Map.of(":v_st", AttributeValue.fromS(state),
+                                ":v_city", AttributeValue.fromS(city)))
+                        .build())
+                .limit(100)
+                .build();
+        return this.table.scan(request);
     }
 
 }

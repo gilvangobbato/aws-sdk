@@ -29,7 +29,6 @@ public class CustomerRepository {
                 dynamoDB.createTable(new CreateTableRequest()
                         .withTableName(TABLE_NAME)
                         .withAttributeDefinitions(new AttributeDefinition(Customer.ID, ScalarAttributeType.S),
-                                new AttributeDefinition(Customer.GENDER, ScalarAttributeType.S),
                                 new AttributeDefinition(Customer.CITY, ScalarAttributeType.S),
                                 new AttributeDefinition(Customer.STATE, ScalarAttributeType.S))
                         .withGlobalSecondaryIndexes(this.buildSecondaryIndex())
@@ -42,13 +41,6 @@ public class CustomerRepository {
     }
 
     private List<GlobalSecondaryIndex> buildSecondaryIndex() {
-        ArrayList<KeySchemaElement> genderKey = new ArrayList<>();
-        genderKey.add(new KeySchemaElement()
-                .withAttributeName(Customer.GENDER)
-                .withKeyType(KeyType.HASH));  //Partition key
-        genderKey.add(new KeySchemaElement()
-                .withAttributeName(Customer.CITY)
-                .withKeyType(KeyType.RANGE));  //Sort key
 
         ArrayList<KeySchemaElement> stateKey = new ArrayList<>();
         stateKey.add(new KeySchemaElement()
@@ -59,13 +51,6 @@ public class CustomerRepository {
                 .withKeyType(KeyType.RANGE));  //Sort key
 
         List<GlobalSecondaryIndex> gsi = new ArrayList<>();
-        gsi.add(new GlobalSecondaryIndex()
-                .withIndexName(Customer.GENDER_GSI)
-                .withProvisionedThroughput(new ProvisionedThroughput()
-                        .withReadCapacityUnits((long) 10)
-                        .withWriteCapacityUnits((long) 10))
-                .withProjection(new Projection().withProjectionType(ProjectionType.ALL))
-                .withKeySchema(genderKey));
         gsi.add(new GlobalSecondaryIndex()
                 .withIndexName(Customer.STATE_GSI)
                 .withProvisionedThroughput(new ProvisionedThroughput()
