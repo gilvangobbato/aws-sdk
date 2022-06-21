@@ -2,6 +2,7 @@ package com.github.gilvangobbato.repository;
 
 import com.github.gilvangobbato.entity.Customer;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 import software.amazon.awssdk.core.async.SdkPublisher;
 import software.amazon.awssdk.enhanced.dynamodb.*;
 import software.amazon.awssdk.enhanced.dynamodb.model.*;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class CustomerRepository {
@@ -27,16 +29,16 @@ public class CustomerRepository {
         this.table = dynamoDbEnhancedAsyncClient.table(TABLE_NAME, TableSchema.fromBean(Customer.class));
         try {
             table.createTable(CreateTableEnhancedRequest.builder()
-                            .globalSecondaryIndices(EnhancedGlobalSecondaryIndex.builder()
-                                    .indexName(Customer.STATE_GSI)
-                                    .projection(Projection.builder()
-                                            .projectionType(ProjectionType.ALL)
-                                            .build())
-                                    .provisionedThroughput(ProvisionedThroughput.builder()
-                                            .readCapacityUnits(10L)
-                                            .writeCapacityUnits(10L)
-                                            .build())
+                    .globalSecondaryIndices(EnhancedGlobalSecondaryIndex.builder()
+                            .indexName(Customer.STATE_GSI)
+                            .projection(Projection.builder()
+                                    .projectionType(ProjectionType.ALL)
                                     .build())
+                            .provisionedThroughput(ProvisionedThroughput.builder()
+                                    .readCapacityUnits(10L)
+                                    .writeCapacityUnits(10L)
+                                    .build())
+                            .build())
                     .build()).get();
         } catch (InterruptedException | ExecutionException e) {
             log.info("Table already exists");
@@ -70,6 +72,20 @@ public class CustomerRepository {
         return dynamoDbEnhancedAsyncClient.transactWriteItems(request.build());
     }
 
+    public Mono<Boolean> createWithBatch(List<Customer> customers) {
+        final var request = BatchWriteItemEnhancedRequest.builder();
+
+        customers.forEach(customer -> {
+            request.addWriteBatch(WriteBatch.builder(Customer.class)
+                    .addPutItem(customer)
+                    .mappedTableResource(this.table)
+                    .build());
+        });
+
+        return Mono.fromFuture(dynamoDbEnhancedAsyncClient.batchWriteItem(request.build()))
+                .thenReturn(Boolean.TRUE);
+    }
+
     public CompletableFuture<Customer> getCustomer(String id) {
         return this.table.getItem(Key.builder()
                 .partitionValue(id)
@@ -88,6 +104,16 @@ public class CustomerRepository {
         });
 
         return dynamoDbEnhancedAsyncClient.transactWriteItems(request.build());
+    }
+
+    public SdkPublisher<Customer> batchGetItems(List<String> keys) {
+        return dynamoDbEnhancedAsyncClient.batchGetItem(BatchGetItemEnhancedRequest.builder()
+                .readBatches(keys.stream().map(it -> ReadBatch.builder(Customer.class)
+                        .addGetItem(Key.builder().partitionValue(it).build())
+                        .mappedTableResource(table)
+                        .build()).collect(Collectors.toList()))
+                .build())
+                .resultsForTable(this.table);
     }
 
     public SdkPublisher<Page<Customer>> queryByStateAndCity(String state, String city) {

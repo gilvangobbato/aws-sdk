@@ -109,15 +109,52 @@ class CustomerServiceTest {
     }
 
     @Test
+    void createWithBatch() {
+        List<Customer> customers = new ArrayList<>();
+
+        for (int i = 0; i < 25; i++) {
+            customers.add(buildCustomer());
+        }
+
+        Mono.just(customers)
+                .flatMap(it -> this.service.createWithBatch(it))
+                .block();
+    }
+
+    @Test
     void populateTable() throws ExecutionException, InterruptedException {
+        final var timeStart = LocalTime.now();
         for (int i = 0; i < 1000; i++) {
             createWithTransaction();
-            Customer customer = this.buildCustomer();
-            customer.setCity("Garibaldi");
-            customer.setState("RS");
-            customer.setCountry("Brasil");
-            this.service.create(customer).get();
         }
+        log.info("25,000 customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms");
+    }
+
+    @Test
+    void populateWithBatch() throws ExecutionException, InterruptedException {
+        final var timeStart = LocalTime.now();
+        for (int i = 0; i < 1000; i++) {
+            createWithBatch();
+        }
+        log.info("25,000 customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms");
+    }
+
+
+    @Test
+    void populateWithBatchGdi() throws ExecutionException, InterruptedException {
+        final var timeStart = LocalTime.now();
+        for (int i = 0; i < 40; i++) {
+            List<Customer> list = new ArrayList<>();
+            for (int j = 0; j < 25; j++) {
+                Customer customer = this.buildCustomer();
+                customer.setCity("Garibaldi");
+                customer.setState("RS");
+                customer.setCountry("Brasil");
+                list.add(customer);
+            }
+            this.service.createWithBatch(list).block();
+        }
+        log.info("1,000 customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms");
     }
 
     @Test
@@ -178,6 +215,27 @@ class CustomerServiceTest {
 
         assert customers != null;
         log.info("Found " + customers.size() + " customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms");
+    }
+
+    @Test
+    void getBatchItems() {
+        List<String> itemsToRead = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            List<Customer> list = new ArrayList<>();
+            for (int j = 0; j < 25; j++) {
+                Customer customer = this.buildCustomer();
+                customer.setCity("Garibaldi");
+                customer.setState("RS");
+                customer.setCountry("Brasil");
+                itemsToRead.add(customer.getId());
+                list.add(customer);
+            }
+            this.service.createWithBatch(list).block();
+        }
+        Mono.just(itemsToRead)
+                .flatMapMany(it -> Flux.from(this.service.batchGetItems(it)))
+                .doOnNext(it -> log.info(it.getName()))
+                .blockLast();
     }
 
     private void assertCustomer(Pair<Customer, Customer> pair) {
