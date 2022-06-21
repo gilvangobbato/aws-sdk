@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -133,14 +134,8 @@ public class CustomerRepository {
         QueryResult result = amazonDynamoDB.query(queryRequest);
         log.info("Scanned " + result.getScannedCount() + " Found " + result.getCount());
         CustomerResponse response = new CustomerResponse();
-        if (result.getItems().size() > 0) {
-            result.getItems().forEach(it -> {
-                response.add(CustomerMapper.fromMap(ItemUtils.toSimpleMapValue(it)));
-            });
-            response.setLastKey(result.getLastEvaluatedKey());
-
-            return response;
-        }
+        response.addAll(result.getItems().stream().map(it -> CustomerMapper.fromMap(ItemUtils.toSimpleMapValue(it))).collect(Collectors.toList()));
+        response.setLastKey(result.getLastEvaluatedKey());
         return response;
     }
 
@@ -157,14 +152,8 @@ public class CustomerRepository {
         ScanResult result = amazonDynamoDB.scan(request);
         log.info("Scanned " + result.getScannedCount() + " Found " + result.getCount());
         CustomerResponse response = new CustomerResponse();
-        if (result.getItems().size() > 0) {
-            result.getItems().forEach(it -> {
-                response.add(CustomerMapper.fromMap(ItemUtils.toSimpleMapValue(it)));
-            });
-            response.setLastKey(result.getLastEvaluatedKey());
-
-            return response;
-        }
+        response.addAll(result.getItems().stream().map(it -> CustomerMapper.fromMap(ItemUtils.toSimpleMapValue(it))).collect(Collectors.toList()));
+        response.setLastKey(result.getLastEvaluatedKey());
         return response;
     }
 
@@ -202,36 +191,31 @@ public class CustomerRepository {
     public void updateTransaction(List<Customer> customers) {
         List<TransactWriteItem> transaction = new ArrayList<>();
 
-        customers.forEach(customer -> {
-
-            final Map<String, Object> map = CustomerMapper.toMap(customer);
-            transaction.add(
-                    new TransactWriteItem().withUpdate(new Update()
-                            .withUpdateExpression("SET #city = :v_city, #name = :v_name, #country = :v_country, #phone = :v_phone, #st = :v_st, #zip = :v_zip, #gen = :v_gen")
-                            .withExpressionAttributeNames(Map.of(
-                                    "#city", Customer.CITY,
-                                    "#country", Customer.COUNTRY,
-                                    "#name", Customer.NAME,
-                                    "#phone", Customer.PHONE,
-                                    "#st", Customer.STATE,
-                                    "#zip", Customer.ZIP_CODE,
-                                    "#gen", Customer.GENDER
-                            ))
-                            .withExpressionAttributeValues(Map.of(
-                                    ":v_city", new AttributeValue(customer.getCity()),
-                                    ":v_name", new AttributeValue(customer.getName()),
-                                    ":v_country", new AttributeValue(customer.getCountry()),
-                                    ":v_phone", new AttributeValue(customer.getPhone()),
-                                    ":v_st", new AttributeValue(customer.getState()),
-                                    ":v_zip", new AttributeValue(customer.getZipCode()),
-                                    ":v_gen", new AttributeValue(customer.getGender().name())
-                            ))
-                            .withKey(Map.of(Customer.ID, new AttributeValue(customer.getId())))
-                            .withTableName(TABLE_NAME)
-                    )
-            );
-
-        });
+        customers.forEach(customer -> transaction.add(
+                new TransactWriteItem().withUpdate(new Update()
+                        .withUpdateExpression("SET #city = :v_city, #name = :v_name, #country = :v_country, #phone = :v_phone, #st = :v_st, #zip = :v_zip, #gen = :v_gen")
+                        .withExpressionAttributeNames(Map.of(
+                                "#city", Customer.CITY,
+                                "#country", Customer.COUNTRY,
+                                "#name", Customer.NAME,
+                                "#phone", Customer.PHONE,
+                                "#st", Customer.STATE,
+                                "#zip", Customer.ZIP_CODE,
+                                "#gen", Customer.GENDER
+                        ))
+                        .withExpressionAttributeValues(Map.of(
+                                ":v_city", new AttributeValue(customer.getCity()),
+                                ":v_name", new AttributeValue(customer.getName()),
+                                ":v_country", new AttributeValue(customer.getCountry()),
+                                ":v_phone", new AttributeValue(customer.getPhone()),
+                                ":v_st", new AttributeValue(customer.getState()),
+                                ":v_zip", new AttributeValue(customer.getZipCode()),
+                                ":v_gen", new AttributeValue(customer.getGender().name())
+                        ))
+                        .withKey(Map.of(Customer.ID, new AttributeValue(customer.getId())))
+                        .withTableName(TABLE_NAME)
+                )
+        ));
 
         amazonDynamoDB.transactWriteItems(new TransactWriteItemsRequest()
                 .withTransactItems(transaction));

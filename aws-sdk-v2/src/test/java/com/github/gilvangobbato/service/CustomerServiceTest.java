@@ -122,7 +122,7 @@ class CustomerServiceTest {
     }
 
     @Test
-    void populateTable() throws ExecutionException, InterruptedException {
+    void populateTable() {
         final var timeStart = LocalTime.now();
         for (int i = 0; i < 1000; i++) {
             createWithTransaction();
@@ -131,7 +131,7 @@ class CustomerServiceTest {
     }
 
     @Test
-    void populateWithBatch() throws ExecutionException, InterruptedException {
+    void populateWithBatch() {
         final var timeStart = LocalTime.now();
         for (int i = 0; i < 1000; i++) {
             createWithBatch();
@@ -141,7 +141,7 @@ class CustomerServiceTest {
 
 
     @Test
-    void populateWithBatchGdi() throws ExecutionException, InterruptedException {
+    void populateWithBatchGdi() {
         final var timeStart = LocalTime.now();
         for (int i = 0; i < 40; i++) {
             List<Customer> list = new ArrayList<>();
