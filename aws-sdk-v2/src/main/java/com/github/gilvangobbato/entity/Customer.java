@@ -3,6 +3,8 @@ package com.github.gilvangobbato.entity;
 import lombok.*;
 import software.amazon.awssdk.enhanced.dynamodb.mapper.annotations.*;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
 @ToString
@@ -17,7 +19,7 @@ public class Customer {
     public static final String PHONE = "phone";
     public static final String STATE = "st";
     public static final String ZIP_CODE = "zip_code";
-    public static final String GENDER = "gender";
+    public static final String UPDATED_AT = "updated_at";
     public static final String STATE_GSI = "StIndex";
 
     private String id;
@@ -28,6 +30,7 @@ public class Customer {
     private String zipCode;
     private String phone;
     private GenderEnum gender;
+    private LocalDateTime updatedAt;
 
     @DynamoDbPartitionKey
     public String getId() {
@@ -65,5 +68,11 @@ public class Customer {
 
     public GenderEnum getGender() {
         return gender;
+    }
+
+    @DynamoDbAttribute(Customer.UPDATED_AT)
+    @DynamoDbConvertedBy(LocalDateTimeConverter.class)
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
     }
 }

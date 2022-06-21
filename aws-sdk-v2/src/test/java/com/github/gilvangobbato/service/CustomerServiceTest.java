@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 import software.amazon.awssdk.utils.Pair;
 
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -59,6 +60,7 @@ class CustomerServiceTest {
                     Assertions.assertEquals(customer.getState(), retrieved.getState());
                     Assertions.assertEquals(customer.getGender(), retrieved.getGender());
                     Assertions.assertEquals(customer.getName(), retrieved.getName());
+                    Assertions.assertEquals(customer.getUpdatedAt(), retrieved.getUpdatedAt());
                 })
                 .block();
 
@@ -113,6 +115,7 @@ class CustomerServiceTest {
             Customer customer = this.buildCustomer();
             customer.setCity("Garibaldi");
             customer.setState("RS");
+            customer.setCountry("Brasil");
             this.service.create(customer).get();
         }
     }
@@ -200,6 +203,7 @@ class CustomerServiceTest {
                 .state(lorem.getStateAbbr())
                 .zipCode(lorem.getZipCode())
                 .gender(gender)
+                .updatedAt(LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS))
                 .build();
     }
 
