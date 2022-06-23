@@ -201,7 +201,6 @@ class CustomerServiceTest {
                 .block();
 
         assert customers != null;
-        log.info("Found " + customers.size() + " customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms");
     }
 
     @Test
