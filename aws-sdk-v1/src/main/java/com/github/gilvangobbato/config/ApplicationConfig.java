@@ -1,5 +1,8 @@
 package com.github.gilvangobbato.config;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
@@ -19,12 +22,15 @@ public class ApplicationConfig {
                                        @Value("${aws.region}") String region) {
         return AmazonDynamoDBAsyncClientBuilder
                 .standard()
+                .withCredentials(new AWSStaticCredentialsProvider(
+                        new BasicAWSCredentials("123", "123"))
+                )
                 .withEndpointConfiguration(new AwsClientBuilder.EndpointConfiguration(endpoint, region))
                 .build();
     }
 
     @Bean
-    DynamoDB dynamoDB(AmazonDynamoDB amazonDynamoDB) {
+    DynamoDB dynamoDB(AmazonDynamoDBAsync amazonDynamoDB) {
         return new DynamoDB(amazonDynamoDB);
     }
 
