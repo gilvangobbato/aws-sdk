@@ -117,7 +117,7 @@ class CustomerServiceTest {
 
     @Test
     void populateTable() {
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 2000; i++) {
             createWithTransaction();
             Customer customer = this.buildCustomer();
             customer.setCity("Garibaldi");

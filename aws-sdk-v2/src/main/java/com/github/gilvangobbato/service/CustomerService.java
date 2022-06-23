@@ -3,6 +3,7 @@ package com.github.gilvangobbato.service;
 import com.github.gilvangobbato.entity.Customer;
 import com.github.gilvangobbato.repository.CustomerRepository;
 import lombok.AllArgsConstructor;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.core.async.SdkPublisher;
 import software.amazon.awssdk.enhanced.dynamodb.model.BatchGetResultPagePublisher;
@@ -47,7 +48,7 @@ public class CustomerService {
         return repository.updateTransaction(customers);
     }
 
-    public SdkPublisher<Page<Customer>> queryByStateAndCity(String state, String city) {
+    public Publisher<Page<Customer>> queryByStateAndCity(String state, String city) {
 
         return repository.queryByStateAndCity(state, city);
     }

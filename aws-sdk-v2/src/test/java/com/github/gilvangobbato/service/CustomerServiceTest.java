@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
+import software.amazon.awssdk.enhanced.dynamodb.model.Page;
 import software.amazon.awssdk.utils.Pair;
 
 import java.time.LocalDateTime;
@@ -127,7 +128,7 @@ class CustomerServiceTest {
         for (int i = 0; i < 1000; i++) {
             createWithTransaction();
         }
-        log.info("25,000 customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms");
+        log.info("Time " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms");
     }
 
     @Test
@@ -136,7 +137,7 @@ class CustomerServiceTest {
         for (int i = 0; i < 1000; i++) {
             createWithBatch();
         }
-        log.info("25,000 customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms");
+        log.info("Time " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms");
     }
 
 
@@ -154,7 +155,7 @@ class CustomerServiceTest {
             }
             this.service.createWithBatch(list).block();
         }
-        log.info("1,000 customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms");
+        log.info("Time " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms");
     }
 
     @Test
@@ -192,10 +193,11 @@ class CustomerServiceTest {
         final var timeStart = LocalTime.now();
 
         List<Customer> customers = Flux.from(service.queryByStateAndCity("RS", "Garibaldi"))
-                .doOnNext(it -> log.info("Found " + (it.items().size())))
-                .flatMap(page -> Flux.fromIterable(page.items()))
+                .doOnNext(page -> log.info("Found " + (page.items().size())))
+                .flatMapIterable(Page::items)
 //                .doOnNext(it -> log.info("Customer: " + it.getName()))
                 .collectList()
+                .doOnNext(it -> log.info("Found " + it.size() + " customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms"))
                 .block();
 
         assert customers != null;
@@ -206,15 +208,13 @@ class CustomerServiceTest {
     void scanByStateAndCity() {
         final var timeStart = LocalTime.now();
 
-        List<Customer> customers = Flux.from(service.scanByStateAndCity("RS", "Garibaldi"))
+        Flux.from(service.scanByStateAndCity("RS", "Garibaldi"))
                 .doOnNext(page -> log.info("Found " + (page.items().size())))
-                .flatMap(page -> Flux.fromIterable(page.items()))
+                .flatMapIterable(Page::items)
 //                .doOnNext(it -> log.info("Customer: " + it.getName()))
                 .collectList()
+                .doOnNext(it -> log.info("Found " + it.size() + " customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms"))
                 .block();
-
-        assert customers != null;
-        log.info("Found " + customers.size() + " customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms");
     }
 
     @Test

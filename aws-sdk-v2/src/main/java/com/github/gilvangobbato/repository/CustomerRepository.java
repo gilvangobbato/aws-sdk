@@ -2,6 +2,7 @@ package com.github.gilvangobbato.repository;
 
 import com.github.gilvangobbato.entity.Customer;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import software.amazon.awssdk.core.async.SdkPublisher;
 import software.amazon.awssdk.enhanced.dynamodb.*;
@@ -108,15 +109,15 @@ public class CustomerRepository {
 
     public SdkPublisher<Customer> batchGetItems(List<String> keys) {
         return dynamoDbEnhancedAsyncClient.batchGetItem(BatchGetItemEnhancedRequest.builder()
-                .readBatches(keys.stream().map(it -> ReadBatch.builder(Customer.class)
-                        .addGetItem(Key.builder().partitionValue(it).build())
-                        .mappedTableResource(table)
-                        .build()).collect(Collectors.toList()))
-                .build())
+                        .readBatches(keys.stream().map(it -> ReadBatch.builder(Customer.class)
+                                .addGetItem(Key.builder().partitionValue(it).build())
+                                .mappedTableResource(table)
+                                .build()).collect(Collectors.toList()))
+                        .build())
                 .resultsForTable(this.table);
     }
 
-    public SdkPublisher<Page<Customer>> queryByStateAndCity(String state, String city) {
+    public Publisher<Page<Customer>> queryByStateAndCity(String state, String city) {
         DynamoDbAsyncIndex<Customer> secIndex = this.table.index(Customer.STATE_GSI);
 
         QueryConditional query = QueryConditional.keyEqualTo(Key.builder()
