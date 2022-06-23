@@ -144,4 +144,16 @@ public class CustomerRepository {
         return this.table.scan(request);
     }
 
+    public PagePublisher<Customer> scanByState(String state) {
+        ScanEnhancedRequest request = ScanEnhancedRequest.builder()
+                .filterExpression(Expression.builder()
+                        .expression("#st = :v_st")
+                        .expressionNames(Map.of("#st", Customer.STATE))
+                        .expressionValues(Map.of(":v_st", AttributeValue.fromS(state)))
+                        .build())
+                .limit(1000)
+                .build();
+        return this.table.scan(request);
+    }
+
 }

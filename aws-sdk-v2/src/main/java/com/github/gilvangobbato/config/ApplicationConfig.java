@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient;
+import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient;
 
@@ -21,6 +22,7 @@ public class ApplicationConfig {
     DynamoDbAsyncClient amazonDynamoDB(@Value("${aws.endpoint}") String endpoint,
                                        @Value("${aws.region}") String region) {
         return DynamoDbAsyncClient.builder()
+                .httpClient(NettyNioAsyncHttpClient.builder().build())
                 .endpointOverride(URI.create(endpoint))
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create("123", "123")

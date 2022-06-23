@@ -60,4 +60,8 @@ public class CustomerService {
     public SdkPublisher<Customer> batchGetItems(List<String> keys) {
         return repository.batchGetItems(keys);
     }
+
+    public PagePublisher<?> scanByState(String it) {
+        return repository.scanByState(it);
+    }
 }

@@ -265,4 +265,21 @@ class CustomerServiceTest {
                 .build();
     }
 
+    @Test
+    void scanByState() {
+        final var timeStart = LocalTime.now();
+
+        Flux.just("RS", "PA", "ME", "NY", "OR", "MS")
+//                .flatMap(it -> service.scanByState(it), 1)
+//                .flatMap(it -> service.scanByState(it), 2)
+                .flatMap(it -> service.scanByState(it), 5)
+//                .flatMap(it -> service.scanByState(it), 10)
+//                .flatMap(it -> service.scanByState(it))
+                .flatMapIterable(Page::items)
+                .collectList()
+                .doOnNext(it -> log.info("Found " + it.size() + " customers in " + timeStart.until(LocalTime.now(), ChronoUnit.MILLIS) + "ms"))
+                .block();
+
+    }
+
 }
